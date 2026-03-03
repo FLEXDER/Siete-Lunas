@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Siete Lunas · Revenue Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080A;--cd:#111114;--cd2:#18181C;--g:#C8A45E;--gl:#E8C66A;--tx:#E8E4DC;--sb:#7A7670;--bd:rgba(200,164,94,0.12);--red:#E85D3A;--grn:#10B981;--blue:#5B9BD5}
+body{background:var(--bg);color:var(--tx);font-family:'Outfit',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:var(--g);color:#000}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+.header{background:linear-gradient(180deg,#0E0E12,var(--bg));border-bottom:1px solid var(--bd);padding:11px 20px;position:sticky;top:0;z-index:50;backdrop-filter:blur(16px)}
+.header-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-circle{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gl));display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--g);letter-spacing:2px}
+.logo-sub{font-size:8px;color:var(--sb);letter-spacing:3px;text-transform:uppercase}
+.header-controls{display:flex;gap:5px;align-items:center}
+.search-wrap{position:relative}
+.search-input{background:var(--cd);border:1px solid var(--bd);color:var(--tx);padding:5px 8px 5px 24px;border-radius:7px;font-size:10px;font-family:inherit;width:130px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--g)}
+.search-icon{position:absolute;left:7px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--sb)}
+.search-results{position:absolute;top:100%;left:0;right:0;background:#1a1a1e;border:1px solid var(--bd);border-radius:7px;margin-top:3px;max-height:200px;overflow-y:auto;z-index:99;display:none}
+.search-results.show{display:block}
+.search-item{padding:5px 8px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:10px;transition:background .15s}
+.search-item:hover{background:rgba(200,164,94,.08)}
+.search-item-name{font-weight:500}
+.search-item-meta{color:var(--sb);font-size:8px}
+.villa-select{background:var(--cd);border:1px solid var(--bd);color:var(--g);padding:5px 6px;border-radius:7px;font-size:10px;font-family:inherit;cursor:pointer}
+
+.wrap{max-width:1300px;margin:0 auto;padding:10px 20px}
+.tabs{display:flex;gap:2px;margin-bottom:12px;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;border:1px solid transparent;color:var(--sb);padding:5px 11px;border-radius:7px;font-size:10px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .2s}
+.tab.active{background:rgba(200,164,94,.13);border-color:rgba(200,164,94,.27);color:var(--g)}
+.tab:hover:not(.active){color:var(--tx)}
+
+.view{display:none;animation:fadeIn .3s ease}
+.view.active{display:flex;flex-direction:column;gap:10px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g7{grid-template-columns:repeat(7,1fr)}
+.g-auto{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.g-auto-lg{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g-auto-ch{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g-cal{grid-template-columns:1fr 260px}
+
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:14px}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--g);margin-bottom:10px}
+
+/* KPI */
+.kpi{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:11px 13px}
+.kpi-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.kpi-label{font-size:9px;color:var(--sb);text-transform:uppercase;letter-spacing:1.5px}
+.kpi-icon{font-size:13px}
+.kpi-value{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--g)}
+.kpi-value.warn{color:var(--red)}
+.kpi-value.green{color:var(--grn)}
+.kpi-sub{font-size:10px;color:var(--sb);margin-top:1px}
+.kpi-sub.warn{color:var(--red)}
+
+/* Bars */
+.bar-track{background:var(--bg);border-radius:3px;height:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.stacked-bar{display:flex;height:20px;border-radius:5px;overflow:hidden;margin-bottom:10px}
+.stacked-bar.tall{height:28px;border-radius:6px}
+.stacked-seg{display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;font-weight:600;transition:width .5s}
+
+/* Channel cards */
+.ch-card{background:var(--cd);border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.ch-card .top-line{position:absolute;top:0;left:0;right:0;height:3px}
+.ch-card-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px}
+.ch-card-name{font-size:14px;font-weight:600}
+.ch-card-rev{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--g);font-weight:700}
+.ch-card-pct{font-size:10px;color:var(--sb)}
+.ch-card-badge{background:var(--bg);border-radius:8px;padding:6px 10px;text-align:center}
+.ch-card-badge-num{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
+.ch-card-badge-label{font-size:8px;color:var(--sb)}
+.ch-card-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ch-card-stat-label{font-size:7px;color:var(--sb);text-transform:uppercase;letter-spacing:1px}
+.ch-card-stat-val{font-size:11px;font-weight:500}
+
+/* Alert */
+.alert{border-radius:10px;padding:14px}
+.alert-warn{background:rgba(232,93,58,.07);border:1px solid rgba(232,93,58,.2)}
+.alert-title{font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px}
+.alert-text{font-size:11px;line-height:1.5}
+
+/* Villa cards */
+.villa-card{background:var(--cd);border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.villa-card .top-line{position:absolute;top:0;left:0;right:0;height:3px}
+.villa-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px}
+.villa-info{display:flex;align-items:center;gap:6px}
+.villa-emoji{font-size:20px}
+.villa-name{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600}
+.villa-meta{font-size:8px;color:var(--sb)}
+.villa-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.villa-stat-label{font-size:7px;color:var(--sb);text-transform:uppercase;letter-spacing:1px}
+.villa-stat-val{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--g)}
+.villa-stat-val.normal{color:var(--tx);font-weight:400}
+
+/* Ring */
+.ring-wrap{position:relative;display:inline-flex}
+.ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Cormorant Garamond',serif;font-weight:700}
+
+/* Ranking */
+.rank-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd)}
+.rank-num{font-size:12px;font-weight:600;width:16px;text-align:center}
+.rank-dot{width:6px;height:6px;border-radius:50%}
+.rank-name{font-size:11px;flex:1}
+.rank-val{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--g);font-weight:600;width:65px;text-align:right}
+.rank-bar{width:120px;background:var(--bg);border-radius:2px;height:5px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:2px}
+.rank-occ{font-size:9px;color:var(--sb);width:30px;text-align:right}
+
+/* Calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-btn{background:none;border:1px solid var(--bd);color:var(--g);padding:3px 9px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .2s}
+.cal-btn:disabled{color:#222;cursor:default}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--g)}
+.cal-chart{background:var(--cd);border-radius:8px;padding:6px 10px;margin-bottom:8px;border:1px solid var(--bd)}
+.cal-chart-label{font-size:8px;color:var(--sb);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.cal-bars{display:flex;align-items:flex-end;gap:1px;height:34px}
+.cal-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:pointer}
+.cal-bar-card{border-radius:1px 1px 0 0;transition:all .15s}
+.cal-bar-cash{background:var(--grn);min-height:1px}
+.cal-legend{display:flex;gap:8px;margin-top:3px;font-size:8px;color:var(--sb)}
+.cal-grid-wrap{background:var(--cd);border-radius:8px;padding:8px;border:1px solid var(--bd)}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px}
+.cal-wd{text-align:center;font-size:8px;color:var(--sb);padding:1px}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{aspect-ratio:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--bd);cursor:pointer;transition:all .15s}
+.cal-day:hover{border-color:rgba(200,164,94,.3)}
+.cal-day.has-occ{background:rgba(200,164,94,.05)}
+.cal-day.selected{background:rgba(200,164,94,.13);border:2px solid var(--g)}
+.cal-day-num{font-size:11px;color:#333}
+.cal-day.has-occ .cal-day-num{color:var(--tx)}
+.cal-day.selected .cal-day-num{font-weight:600}
+.cal-day-dots{display:flex;gap:1px;margin-top:1px}
+.cal-dot{width:4px;height:4px;border-radius:50%}
+.cal-colors{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-top:4px;border-top:1px solid var(--bd)}
+.cal-color{display:flex;align-items:center;gap:2px;font-size:7px;color:var(--sb)}
+.cal-color-dot{width:5px;height:5px;border-radius:50%}
+
+/* Side panel */
+.side-panel{background:var(--cd);border-radius:8px;padding:10px;border:1px solid var(--bd);position:sticky;top:60px}
+.side-title{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--g)}
+.side-sub{font-size:9px;color:var(--sb);margin-bottom:6px}
+.side-empty{text-align:center;padding:14px}
+.side-empty-icon{font-size:20px}
+.side-empty-text{font-size:9px;color:var(--sb);margin-top:2px}
+.res-card{border-radius:6px;padding:7px;cursor:pointer;border:1px solid var(--bd);margin-bottom:4px;transition:all .15s;background:var(--bg)}
+.res-card:hover,.res-card.open{background:rgba(200,164,94,.07);border-color:rgba(200,164,94,.2)}
+.res-card-head{display:flex;justify-content:space-between}
+.res-card-guest{font-size:10px;font-weight:500}
+.res-card-room{display:flex;align-items:center;gap:2px;margin-top:2px}
+.res-card-room-dot{width:4px;height:4px;border-radius:50%;display:inline-block}
+.res-card-room-name{font-size:8px;color:var(--sb)}
+.res-card-total{font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600}
+.res-card-detail{margin-top:4px;padding-top:4px;border-top:1px solid var(--bd);font-size:9px;display:grid;grid-template-columns:1fr 1fr;gap:2px;display:none}
+.res-card.open .res-card-detail{display:grid}
+.res-card-detail span.label{color:var(--sb)}
+.side-footer{margin-top:5px;padding-top:5px;border-top:1px solid var(--bd);display:flex;justify-content:space-between}
+.side-footer-label{font-size:8px;color:var(--sb)}
+.side-footer-val{font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:10px}
+th{padding:6px 8px;text-align:left;font-size:8px;color:var(--sb);text-transform:uppercase;letter-spacing:1.5px;font-weight:500;border-bottom:1px solid var(--bd)}
+td{padding:5px 8px;border-bottom:1px solid var(--bd)}
+tr:hover td{background:rgba(200,164,94,.04)}
+.td-guest{font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-total{font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600}
+.td-paid{color:var(--grn);font-size:9px}
+.td-pending{color:var(--red);font-size:9px}
+.td-channel{font-size:9px;font-weight:500}
+.td-sub{color:var(--sb);font-size:9px}
+.td-room{display:inline-flex;align-items:center;gap:2px}
+.td-room-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.td-room-name{font-size:9px}
+
+.footer{text-align:center;padding:12px 0 4px;font-size:8px;color:#222}
+
+@media(max-width:800px){
+  .g2,.g3,.g-cal{grid-template-columns:1fr}
+  .g7{grid-template-columns:repeat(4,1fr)}
+  .ch-card-stats{grid-template-columns:repeat(2,1fr)}
+  .rank-bar{width:60px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-circle">🌙</div>
+      <div>
+        <div class="logo-text">SIETE LUNAS</div>
+        <div class="logo-sub">Revenue Dashboard · Ene–Mar 2026</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="Buscar..." oninput="doSearch()">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <select class="villa-select" id="villaSelect" onchange="filterVilla()">
+        <option value="all">Todas</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs" id="tabs"></div>
+  <div id="viewOverview" class="view active"></div>
+  <div id="viewHotel" class="view"></div>
+  <div id="viewChannels" class="view"></div>
+  <div id="viewCalendar" class="view"></div>
+  <div id="viewPayments" class="view"></div>
+  <div id="viewRooms" class="view"></div>
+  <div id="viewList" class="view"></div>
+  <div class="footer">Hotel Boutique Siete Lunas · Datos oficiales Little Hotelier · 106 check-ins · 113 reservas · 7 villas · 74% ocupación</div>
+</div>
+
+<script>
+// === DATA ===
+const CHANNELS=[
+  {n:"Expedia",rev:968274,res:53,canc:14,nights:197,adr:4915,lead:14,stay:5,c:"#FBBF24"},
+  {n:"Extranet",rev:188851,res:21,canc:6,nights:46,adr:4105,lead:36,stay:2,c:"#C8A45E"},
+  {n:"Direct Booking",rev:171463,res:12,canc:1,nights:29,adr:5912,lead:30,stay:3,c:"#10B981"},
+  {n:"Airbnb",rev:47020,res:7,canc:2,nights:12,adr:3918,lead:15,stay:2,c:"#FF385C"},
+  {n:"Mobile App",rev:10830,res:1,canc:0,nights:2,adr:5415,lead:2,stay:2,c:"#8B5CF6"},
+  {n:"Booking.com",rev:9642,res:19,canc:8,nights:33,adr:292,lead:9,stay:2,c:"#003580"},
+];
+const CH_TOT={rev:1396081,res:113,canc:31,nights:319};
+const VILLAS=[
+  {n:"Villa Viento",rev:281085,res:14,nights:53,occ:85,adr:5303,revpar:4533,lead:31,stay:4,c:"#5B9BD5",e:"🌬️"},
+  {n:"Villa Fuego",rev:261929,res:18,nights:50,occ:83,adr:5238,revpar:4365,lead:37,stay:3,c:"#E85D3A",e:"🔥"},
+  {n:"Villa Mar",rev:248796,res:16,nights:51,occ:82,adr:4878,revpar:4012,lead:26,stay:3,c:"#2E8B8B",e:"🌊"},
+  {n:"Villa Tierra",rev:172544,res:16,nights:45,occ:73,adr:3834,revpar:2782,lead:20,stay:3,c:"#8B6F47",e:"🌿"},
+  {n:"Villa Cristal",rev:158527,res:19,nights:45,occ:73,adr:3522,revpar:2556,lead:20,stay:2,c:"#9B6BB0",e:"💎"},
+  {n:"Villa Agua",rev:138767,res:14,nights:38,occ:61,adr:3651,revpar:2238,lead:12,stay:3,c:"#3AAFE8",e:"💧"},
+  {n:"Villa Norte",rev:134429,res:16,nights:37,occ:61,adr:3633,revpar:2203,lead:37,stay:3,c:"#C8A45E",e:"⭐"},
+];
+const REV={hab:1396081,ext:97896,imp:255798};
+const H={occ:74,adr:4376,revpar:3239,avgRev:12354,lead:26,stay:3,tN:434,oN:319,uN:112,cN:3,cancelled:403328};
+const PM={Mastercard:{v:943042,c:"#EB001B"},Visa:{v:267599,c:"#1A1F71"},"American Express":{v:109736,c:"#006FCF"},Efectivo:{v:42713,c:"#4CAF50"},Otro:{v:25057,c:"#777"}};
+const pmT=Object.values(PM).reduce((a,b)=>a+b.v,0);
+const RC=Object.fromEntries(VILLAS.map(v=>[v.n,v.c]));
+const RE=Object.fromEntries(VILLAS.map(v=>[v.n,v.e]));
+
+const CI=[{"r":"LH25102351741044","g":"VAUGHN, KELLY","d":"02-01-2026","n":3,"rm":"Villa Norte","p":0,"t":15384.31},{"r":"ABB-HMSKYY9RTZ","g":"Chudacoff, Amanda","d":"03-01-2026","n":2,"rm":"Villa Tierra","p":7687.77,"t":9147.77},{"r":"EXP-2355386249","g":"Dalla Chiesa, Matteo","d":"03-01-2026","n":4,"rm":"Villa Fuego","p":0,"t":24200.44},{"r":"LH26010253019827","g":"Diaz, Diego","d":"03-01-2026","n":2,"rm":"Villa Viento","p":0,"t":10475},{"r":"EXP-2362176973","g":"Armytage, Harley","d":"03-01-2026","n":1,"rm":"Villa Mar","p":0,"t":3615.76},{"r":"EXP-2362361677","g":"Nierlé, Laurent","d":"03-01-2026","n":1,"rm":"Villa Agua","p":0,"t":3890.5},{"r":"EXP-2337799448","g":"Hunt-Ryan, Laura","d":"04-01-2026","n":7,"rm":"Villa Agua","p":0,"t":24735.42},{"r":"EXP-2360481962","g":"Wagoner, Jason","d":"04-01-2026","n":3,"rm":"Villa Mar","p":0.01,"t":12500.23},{"r":"EXP-2342524084","g":"Reid, Jody","d":"05-01-2026","n":6,"rm":"Villa Viento","p":0,"t":30930.17},{"r":"EXP-2360680995","g":"McMaster, Becky","d":"05-01-2026","n":3,"rm":"Villa Tierra","p":0,"t":11904.98},{"r":"LH25102351741077","g":"WITTENMYER, JOHN","d":"07-01-2026","n":3,"rm":"Villa Norte","p":0,"t":15804.26},{"r":"EXP-2343598420","g":"D'Amore, Virginia Lane","d":"07-01-2026","n":4,"rm":"Villa Cristal","p":0,"t":19344.61},{"r":"LH26010653102047","g":"Mclinton, James","d":"07-01-2026","n":1,"rm":"Villa Mar","p":0,"t":3900},{"r":"EXP-2344043855","g":"Gurr, Barbara","d":"08-01-2026","n":4,"rm":"Villa Tierra","p":0,"t":22637.18},{"r":"LH26010853148885","g":"ROCHA, MIGUEL","d":"08-01-2026","n":1,"rm":"Villa Mar","p":0,"t":4200.01},{"r":"LH25102351741090","g":"Dodak, Gary","d":"09-01-2026","n":3,"rm":"Villa Mar","p":0,"t":20443.21},{"r":"EXP-2360054663","g":"Garza, Gregorio","d":"09-01-2026","n":1,"rm":"Villa Fuego","p":0,"t":6655.13},{"r":"EXP-2341969035","g":"Schorer, Emily","d":"10-01-2026","n":7,"rm":"Villa Fuego","p":0,"t":46541.56},{"r":"EXP-2360055713","g":"Garza, Gregorio","d":"10-01-2026","n":1,"rm":"Villa Norte","p":0,"t":5001.67},{"r":"BDC-6253739905","g":"Dubois-Graffin, Florine","d":"11-01-2026","n":2,"rm":"Villa Cristal","p":562.97,"t":1377.97},{"r":"ABB-HMMMY9BBX8","g":"Curayag, Danny","d":"12-01-2026","n":2,"rm":"Villa Mar","p":8980.85,"t":12035.85},{"r":"EXP-2351055625","g":"Sterling, Cynthia L","d":"13-01-2026","n":7,"rm":"Villa Cristal","p":0,"t":33230.54},{"r":"EXP-2369577776","g":"Dick, Andrew","d":"13-01-2026","n":2,"rm":"Villa Viento","p":0,"t":5532.12},{"r":"EXP-2347305135","g":"Schlosser, Brian","d":"14-01-2026","n":4,"rm":"Villa Mar","p":0,"t":21236.78},{"r":"EXP-2370149910","g":"Contreras, Mariela","d":"14-01-2026","n":2,"rm":"Villa Tierra","p":0,"t":5854.08},{"r":"EXP-2341337964","g":"Glinski, Breanna","d":"15-01-2026","n":10,"rm":"Villa Viento","p":0,"t":52596.95},{"r":"LH26011453286132","g":"Castrejón, Hugo","d":"15-01-2026","n":2,"rm":"Villa Agua","p":0,"t":5250},{"r":"BDC-6269032411","g":"Cueva Ibañez, Jose Miguel","d":"16-01-2026","n":1,"rm":"Villa Tierra","p":233.82,"t":993.82},{"r":"EXP-2354477004","g":"EISENMAN, ERIC","d":"17-01-2026","n":4,"rm":"Villa Tierra","p":0,"t":17786.01},{"r":"ABB-HMPYJM523E","g":"Velasco Tovar, Jesus","d":"17-01-2026","n":1,"rm":"Villa Agua","p":3494.71,"t":3494.71},{"r":"EXP-2362968013","g":"Knight, Adam","d":"17-01-2026","n":5,"rm":"Villa Norte","p":0,"t":17775.74},{"r":"EXP-2365712537","g":"Gomez del Rio, Alejandro","d":"18-01-2026","n":4,"rm":"Villa Mar","p":0,"t":17546.65},{"r":"EXP-2371842790","g":"van Santvoort, Tim","d":"18-01-2026","n":1,"rm":"Villa Agua","p":0,"t":3697.75},{"r":"LH26011653335240","g":"Meiners Húbner, Gerardo","d":"19-01-2026","n":2,"rm":"Villa Fuego","p":0,"t":7096},{"r":"EXP-2351580924","g":"Bailey, Joshua James","d":"21-01-2026","n":6,"rm":"Villa Tierra","p":0,"t":26379},{"r":"ABB-HMMNNT4PEX","g":"Harlow, Dee","d":"22-01-2026","n":2,"rm":"Villa Mar","p":8072.22,"t":8072.22},{"r":"BDC-5366337676","g":"Alexandre, Le joncour","d":"22-01-2026","n":2,"rm":"Villa Fuego","p":718.78,"t":2973.78},{"r":"LH26012053424433","g":"Kury, Sofía","d":"22-01-2026","n":1,"rm":"Villa Cristal","p":0,"t":5310},{"r":"BDC-5221194579","g":"Marin ruiz, Liliana","d":"23-01-2026","n":2,"rm":"Villa Cristal","p":567.77,"t":997.77},{"r":"EXP-2359152029","g":"Holzworth, Peter Blythe","d":"23-01-2026","n":3,"rm":"Villa Agua","p":0,"t":14405.92},{"r":"EXP-2364906450","g":"De la Rocha, Rafael","d":"23-01-2026","n":2,"rm":"Villa Norte","p":0,"t":7775.89},{"r":"EXP-2351022848","g":"getty, william scott","d":"24-01-2026","n":7,"rm":"Villa Mar","p":0,"t":32952.72},{"r":"EXP-2352637050","g":"Fisher, Justin Joel","d":"24-01-2026","n":4,"rm":"Villa Fuego","p":0,"t":21850.19},{"r":"BDC-6386880284","g":"Doucet, Nancy","d":"25-01-2026","n":1,"rm":"Villa Cristal","p":207.72,"t":1082.72},{"r":"EXP-2362828264","g":"Dumaop, Gabriel","d":"26-01-2026","n":4,"rm":"Villa Cristal","p":0,"t":17986.93},{"r":"LH25102351741151","g":"FRANCESCONI, MICHAELE","d":"28-01-2026","n":2,"rm":"Villa Norte","p":0,"t":10550.85},{"r":"EXP-2380602117","g":"GUERRERO, GILBERTO","d":"28-01-2026","n":1,"rm":"Villa Fuego","p":0,"t":4530.21},{"r":"ABB-HMSHBSSPZE","g":"Castro Olarte, Juan Manuel","d":"28-01-2026","n":1,"rm":"Villa Agua","p":2727.54,"t":2897.54},{"r":"BBN-BB26011819752335","g":"Berumen, Colleen","d":"28-01-2026","n":1,"rm":"Villa Viento","p":0,"t":5791.65},{"r":"EXP-2347088761","g":"ARNOLD, ASHLEY","d":"29-01-2026","n":10,"rm":"Villa Viento","p":0,"t":59769.86},{"r":"BDC-6228167703","g":"Cruz Ramirez, Daniel","d":"30-01-2026","n":2,"rm":"Villa Cristal","p":457.74,"t":457.74},{"r":"BDC-6694611471","g":"Simcha, Salomon","d":"30-01-2026","n":1,"rm":"Villa Tierra","p":209.77,"t":209.77},{"r":"BDC-5302817972","g":"Weisman, Michael","d":"30-01-2026","n":1,"rm":"Villa Norte","p":190.7,"t":190.7},{"r":"BBN-BB26012919865683","g":"wells, Austin","d":"30-01-2026","n":2,"rm":"Villa Agua","p":0,"t":8142.33},{"r":"ABB-HMDA2EYMEA","g":"Mendoza García, Dafne","d":"31-01-2026","n":2,"rm":"Villa Norte","p":7908.59,"t":8658.59},{"r":"BDC-5535388729","g":"KOURCHENKO B, ROGERIO","d":"31-01-2026","n":2,"rm":"Villa Fuego","p":672.98,"t":1695.98},{"r":"LH26012953638402","g":"Jara, Karina","d":"31-01-2026","n":2,"rm":"Villa Tierra","p":0,"t":11560.54},{"r":"ABB-HM2YQSCP4N","g":"Mendez, Fernanda","d":"31-01-2026","n":2,"rm":"Villa Mar","p":8147.63,"t":9242.63},{"r":"BDC-5219282142","g":"Puerto, Yadira","d":"01-02-2026","n":2,"rm":"Villa Agua","p":415.05,"t":415.05},{"r":"LH26020153695726","g":"Cruz Ramirez, Daniel","d":"01-02-2026","n":1,"rm":"Villa Cristal","p":0,"t":3959.45},{"r":"LH25102351741194","g":"HICKS, MELANIE","d":"02-02-2026","n":2,"rm":"Villa Fuego","p":0,"t":19415.24},{"r":"EXP-2341856151","g":"Borstmayer, Lianne","d":"02-02-2026","n":1,"rm":"Villa Cristal","p":0,"t":5281.83},{"r":"EXP-2341856154","g":"Borstmayer, Lianne","d":"02-02-2026","n":1,"rm":"Villa Tierra","p":0,"t":5281.83},{"r":"BDC-6374127447","g":"Coleman, james","d":"02-02-2026","n":1,"rm":"Villa Norte","p":195.35,"t":195.35},{"r":"BBN-BB26020119896141","g":"Baquera, Phillip","d":"02-02-2026","n":2,"rm":"Villa Mar","p":0,"t":10198.6},{"r":"BDC-5967020196","g":"Soto Badillo, Walter","d":"03-02-2026","n":1,"rm":"Villa Cristal","p":252.73,"t":1312.73},{"r":"LH25102351741221","g":"FINKLE, CARLY","d":"04-02-2026","n":2,"rm":"Villa Tierra","p":0,"t":9139.99},{"r":"BDC-6304858000","g":"Gordon, Leonard","d":"04-02-2026","n":4,"rm":"Villa Fuego","p":1624.45,"t":1624.45},{"r":"EXP-2386333731","g":"Zapata, Cristina","d":"04-02-2026","n":1,"rm":"Villa Agua","p":0,"t":5281.04},{"r":"BBN-BB25122719548148","g":"Kennedy, Madison","d":"05-02-2026","n":5,"rm":"Villa Cristal","p":0.02,"t":29775.09},{"r":"EXP-2340203032","g":"Conacher, Jaquelyn","d":"06-02-2026","n":12,"rm":"Villa Agua","p":0,"t":53802.69},{"r":"LH25120952640143","g":"SANTOS, LAURA","d":"06-02-2026","n":2,"rm":"Villa Norte","p":0,"t":0},{"r":"BBN-BB26020619952582","g":"Alvarez, Alfredo","d":"06-02-2026","n":1,"rm":"Villa Tierra","p":0,"t":5545.51},{"r":"EXP-2362320270","g":"Eden, Remy","d":"07-02-2026","n":1,"rm":"Villa Mar","p":0,"t":6274.47},{"r":"EXP-2384918372","g":"Field, Caroline","d":"08-02-2026","n":6,"rm":"Villa Tierra","p":0,"t":33725.44},{"r":"EXP-2342558849","g":"Kastner, Erin","d":"09-02-2026","n":13,"rm":"Villa Mar","p":0,"t":68963.13},{"r":"EXP-2352219588","g":"Rasch, Mickie","d":"09-02-2026","n":3,"rm":"Villa Fuego","p":0,"t":23079.89},{"r":"LH25102351741229","g":"TKACH, CHARLENE","d":"10-02-2026","n":7,"rm":"Villa Viento","p":0,"t":39884.1},{"r":"BDC-5282370237","g":"Martin, Sue","d":"12-02-2026","n":3,"rm":"Villa Cristal","p":993.45,"t":2403.45},{"r":"BBN-BB25120219386722","g":"COOK, ZACHARY","d":"12-02-2026","n":1,"rm":"Villa Norte","p":0,"t":5305.38},{"r":"EXP-2368029256","g":"García, Francisco","d":"13-02-2026","n":3,"rm":"Villa Norte","p":0,"t":16420.18},{"r":"BBN-BB26021019994011","g":"Fernandez, Jesus","d":"13-02-2026","n":2,"rm":"Villa Fuego","p":0,"t":19433},{"r":"BDC-5078267371","g":"Urbig, Nayla","d":"14-02-2026","n":2,"rm":"Villa Tierra","p":608.5,"t":1393.5},{"r":"EXP-2356567659","g":"Slotsema, Tanner","d":"15-02-2026","n":7,"rm":"Villa Fuego","p":0,"t":50996.47},{"r":"EXP-2365136031","g":"Yudice, Martin","d":"15-02-2026","n":2,"rm":"Villa Cristal","p":0,"t":10337.67},{"r":"LH26012853614286","g":"ARREGUI, MARIANA","d":"16-02-2026","n":4,"rm":"Villa Norte","p":0,"t":0},{"r":"EXP-2393160345","g":"langlois, catherine","d":"16-02-2026","n":6,"rm":"Villa Tierra","p":0,"t":33308.57},{"r":"EXP-2384160330","g":"McDonald, Todd","d":"17-02-2026","n":2,"rm":"Villa Viento","p":0,"t":12051.56},{"r":"EXP-2396613918","g":"Mcdowell, Kelley","d":"18-02-2026","n":1,"rm":"Villa Cristal","p":0,"t":3697.75},{"r":"BBN-BB25112519328918","g":"Breigenzer, Anna","d":"19-02-2026","n":5,"rm":"Villa Viento","p":0,"t":34007.76},{"r":"LH26012453519905","g":"Aranda, Daniela","d":"20-02-2026","n":2,"rm":"Villa Norte","p":0,"t":7800},{"r":"LH26022054138122","g":"LANDAY, LANDAY","d":"20-02-2026","n":2,"rm":"Villa Cristal","p":0,"t":8495.01},{"r":"LH26022354201254","g":"LANDAY, LANDAY","d":"22-02-2026","n":1,"rm":"Villa Cristal","p":0,"t":3200},{"r":"EXP-2370500790","g":"Abi Ezzi, Laurie","d":"23-02-2026","n":3,"rm":"Villa Fuego","p":0,"t":21321.05},{"r":"EXP-2399284583","g":"braly, roman","d":"23-02-2026","n":2,"rm":"Villa Agua","p":7936.66,"t":7936.66},{"r":"LH26022454225769","g":"NAVARRETE, XIMENA","d":"24-02-2026","n":2,"rm":"Villa Viento","p":0,"t":8400},{"r":"BDC-6813914238","g":"Olague, Miguel","d":"25-02-2026","n":1,"rm":"Villa Agua","p":3065.32,"t":3065.32},{"r":"BBN-BB26012319807451","g":"JONES, Rhys","d":"26-02-2026","n":3,"rm":"Villa Mar","p":0,"t":17460.97},{"r":"LH26022754296333","g":"AVALOS, NATALY","d":"27-02-2026","n":1,"rm":"Villa Viento","p":0,"t":3075},{"r":"EXP-2386876039","g":"Henderson, Connor","d":"28-02-2026","n":2,"rm":"Villa Viento","p":0,"t":10828.47},{"r":"BDC-6543535392","g":"BEJAR ANAYA, CESAR","d":"28-02-2026","n":2,"rm":"Villa Fuego","p":440.49,"t":1930.49},{"r":"BBN-BB26010419613495","g":"Martin, James","d":"28-02-2026","n":6,"rm":"Villa Norte","p":1600.53,"t":37807.24},{"r":"EXP-2333574929","g":"Ware, Courtney","d":"02-03-2026","n":1,"rm":"Villa Fuego","p":0,"t":3932.52},{"r":"EXP-2333573221","g":"Ware, Courtney Lee","d":"03-03-2026","n":5,"rm":"Villa Fuego","p":1209.96,"t":28435.2},{"r":"BDC-5219622513","g":"van Etten, Matthijs","d":"03-03-2026","n":2,"rm":"Villa Cristal","p":363.53,"t":363.53},{"r":"BBN-BB26022620154961","g":"Pighin, Brett","d":"03-03-2026","n":3,"rm":"Villa Viento","p":0,"t":14706.15}];
+
+const DP=[{"d":"02-01","t":1140,"c":1140,"e":0},{"d":"03-01","t":73171,"c":62671,"e":10500},{"d":"04-01","t":72842,"c":72842,"e":0},{"d":"05-01","t":52325,"c":52050,"e":275},{"d":"06-01","t":3900,"c":3900,"e":0},{"d":"07-01","t":33434,"c":33434,"e":0},{"d":"08-01","t":22907,"c":22907,"e":0},{"d":"09-01","t":19355,"c":19355,"e":0},{"d":"10-01","t":51688,"c":51688,"e":0},{"d":"11-01","t":1970,"c":1770,"e":200},{"d":"12-01","t":1856,"c":1856,"e":0},{"d":"13-01","t":36598,"c":36598,"e":0},{"d":"14-01","t":29076,"c":29076,"e":0},{"d":"15-01","t":55417,"c":55417,"e":0},{"d":"17-01","t":37042,"c":35342,"e":1700},{"d":"18-01","t":25461,"c":25461,"e":0},{"d":"19-01","t":2757,"c":2757,"e":0},{"d":"20-01","t":7250,"c":7180,"e":70},{"d":"21-01","t":34185,"c":26659,"e":7526},{"d":"22-01","t":6797,"c":6797,"e":0},{"d":"23-01","t":35913,"c":35913,"e":0},{"d":"24-01","t":55998,"c":55998,"e":0},{"d":"25-01","t":2610,"c":2180,"e":430},{"d":"26-01","t":20162,"c":20162,"e":0},{"d":"27-01","t":4350,"c":4350,"e":0},{"d":"28-01","t":13861,"c":13791,"e":70},{"d":"29-01","t":14594,"c":11696,"e":2898},{"d":"30-01","t":61260,"c":61090,"e":170},{"d":"31-01","t":10750,"c":1190,"e":9561},{"d":"01-02","t":13123,"c":13123,"e":0},{"d":"02-02","t":22162,"c":21067,"e":1095},{"d":"03-02","t":820,"c":820,"e":0},{"d":"04-02","t":10125,"c":9065,"e":1060},{"d":"05-02","t":5281,"c":5281,"e":0},{"d":"06-02","t":12130,"c":11991,"e":140},{"d":"07-02","t":61732,"c":61732,"e":0},{"d":"08-02","t":27785,"c":27785,"e":0},{"d":"09-02","t":90093,"c":90093,"e":0},{"d":"10-02","t":37564,"c":37564,"e":0},{"d":"12-02","t":120,"c":0,"e":120},{"d":"13-02","t":32383,"c":32383,"e":0},{"d":"14-02","t":7900,"c":7900,"e":0},{"d":"15-02","t":59114,"c":59114,"e":0},{"d":"16-02","t":26783,"c":26783,"e":0},{"d":"17-02","t":13975,"c":13975,"e":0},{"d":"18-02","t":22721,"c":22721,"e":0},{"d":"19-02","t":4944,"c":4944,"e":0},{"d":"20-02","t":45348,"c":41448,"e":3900},{"d":"21-02","t":280,"c":0,"e":280},{"d":"22-02","t":4610,"c":4610,"e":0},{"d":"23-02","t":3615,"c":3615,"e":0},{"d":"24-02","t":29105,"c":29105,"e":0},{"d":"25-02","t":8400,"c":8400,"e":0},{"d":"26-02","t":1397,"c":0,"e":1397},{"d":"28-02","t":13839,"c":10839,"e":3000},{"d":"01-03","t":1220,"c":0,"e":1220},{"d":"02-03","t":5487,"c":5487,"e":0},{"d":"03-03","t":41931,"c":41931,"e":0}];
+
+// === HELPERS ===
+const fmt=n=>"$"+Math.round(n).toLocaleString("es-MX");
+function pd(s){const[d,m,y]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function getCh(r){if(r.startsWith("EXP"))return{n:"Expedia",c:"#FBBF24"};if(r.startsWith("BDC"))return{n:"Booking.com",c:"#003580"};if(r.startsWith("ABB"))return{n:"Airbnb",c:"#FF385C"};if(r.startsWith("BBN"))return{n:"Beds24",c:"#10B981"};if(r.startsWith("LH"))return{n:"Directa",c:"#C8A45E"};return{n:"Otro",c:"#888"}}
+function ring(pct,size=80,sw=7){const r=(size-sw)/2,c=2*Math.PI*r,o=c-(pct/100)*c,col=pct>=80?"#10B981":pct>=70?"#C8A45E":"#E85D3A";return`<svg width="${size}" height="${size}" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1a1a1e" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-dasharray="${c}" stroke-dashoffset="${o}" stroke-linecap="round" style="transition:stroke-dashoffset .8s"/></svg>`}
+function kpi(l,v,s,icon,warn,accent){return`<div class="kpi"><div class="kpi-head"><span class="kpi-label">${l}</span><span class="kpi-icon">${icon}</span></div><div class="kpi-value${warn?' warn':''}${accent?' green':''}">${v}</div><div class="kpi-sub${warn?' warn':''}">${s}</div></div>`}
+function bar(pct,color){return`<div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>`}
+
+// === STATE ===
+let curView="overview",curMonth=0,selDate=null,selRoom="all",openRes=null;
+const months=[{l:"Enero",m:0,y:2026},{l:"Febrero",m:1,y:2026},{l:"Marzo",m:2,y:2026}];
+
+function getFiltered(){return selRoom==="all"?CI:CI.filter(d=>d.rm===selRoom)}
+function getStats(data){const r=data.reduce((s,d)=>s+d.t,0),n=data.reduce((s,d)=>s+d.n,0),p=data.reduce((s,d)=>s+Math.max(0,d.p),0);return{rev:r,nights:n,pending:p,avg:n?r/n:0,stay:data.length?n/data.length:0,cnt:data.length}}
+function getOccMap(data){const map={};data.forEach(r=>{const s=pd(r.d);for(let i=0;i<r.n;i++){const d=new Date(s);d.setDate(d.getDate()+i);const k=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;if(!map[k])map[k]=[];map[k].push(r)}});return map}
+
+// === TABS ===
+const TABS=[["overview","📊 Overview"],["hotel","🏨 Hotel KPIs"],["channels","📡 Canales"],["calendar","📅 Calendario"],["payments","💳 Pagos"],["rooms","🏠 Villas"],["list","📋 Reservas"]];
+function initTabs(){const el=document.getElementById("tabs");el.innerHTML=TABS.map(([v,l])=>`<button class="tab${v===curView?" active":""}" onclick="switchView('${v}')">${l}</button>`).join("")}
+function switchView(v){curView=v;openRes=null;document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",TABS[i][0]===v));document.querySelectorAll(".view").forEach(el=>el.classList.remove("active"));document.getElementById("view"+v.charAt(0).toUpperCase()+v.slice(1)).classList.add("active");render()}
+
+// === VILLA SELECT ===
+function initVillaSelect(){const sel=document.getElementById("villaSelect");VILLAS.forEach(v=>{const o=document.createElement("option");o.value=v.n;o.textContent=v.e+" "+v.n;sel.appendChild(o)})}
+function filterVilla(){selRoom=document.getElementById("villaSelect").value;render()}
+
+// === SEARCH ===
+function doSearch(){const q=document.getElementById("searchInput").value.toLowerCase();const el=document.getElementById("searchResults");if(q.length<2){el.classList.remove("show");return}const res=CI.filter(d=>d.g.toLowerCase().includes(q)||d.r.toLowerCase().includes(q)).slice(0,8);if(!res.length){el.classList.remove("show");return}el.innerHTML=res.map(r=>`<div class="search-item" onclick="document.getElementById('searchInput').value='';document.getElementById('searchResults').classList.remove('show');switchView('list')"><div class="search-item-name">${r.g}</div><div class="search-item-meta">${r.rm} · ${r.d} · ${fmt(r.t)}</div></div>`).join("");el.classList.add("show")}
+document.addEventListener("click",e=>{if(!e.target.closest(".search-wrap"))document.getElementById("searchResults").classList.remove("show")});
+
+// === RENDER VIEWS ===
+function render(){
+  const f=getFiltered(),st=getStats(f);
+  renderOverview(f,st);renderHotel();renderChannels();renderCalendar(f);renderPayments();renderRooms(st);renderList(f);
+}
+
+function renderOverview(f,st){
+  const mStats=months.map(m=>{const md=f.filter(d=>{const dt=pd(d.d);return dt.getMonth()===m.m});return{...m,rev:md.reduce((s,d)=>s+d.t,0),cnt:md.length,nights:md.reduce((s,d)=>s+d.n,0)}});
+  const mMax=Math.max(...mStats.map(m=>m.rev),1);
+  document.getElementById("viewOverview").innerHTML=`
+    <div class="grid g-auto" style="gap:8px">${kpi("Ingreso Total",fmt(CH_TOT.rev),"habitaciones (LH oficial)","💰")}${kpi("+ Extras",fmt(REV.ext),"restaurante y servicios","🍽️")}${kpi("Cobrado",fmt(1388148),"173 transacciones","✅")}${kpi("Ocupación",H.occ+"%",H.oN+"/"+H.tN+" noches","🛏️")}${kpi("ADR",fmt(H.adr),"tarifa diaria promedio","📈")}${kpi("RevPAR",fmt(H.revpar),"por hab. disponible","🎯")}</div>
+    <div class="grid g2">
+      <div class="card"><div class="card-title">Ingresos Mensuales</div>${mStats.map(ms=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:11px">${ms.l}</span><span style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--g);font-weight:600">${fmt(ms.rev)}</span></div>${bar((ms.rev/mMax)*100,"linear-gradient(90deg,var(--g),var(--gl))")}<div style="font-size:8px;color:var(--sb);margin-top:1px">${ms.cnt} reservas · ${ms.nights} noches</div></div>`).join("")}</div>
+      <div class="card"><div class="card-title">Canales (Oficial LH)</div><div class="stacked-bar">${CHANNELS.map(ch=>`<div class="stacked-seg" style="width:${(ch.rev/CH_TOT.rev)*100}%;background:${ch.c};color:${ch.n==="Booking.com"?"#fff":"#000"}">${(ch.rev/CH_TOT.rev)>0.1?((ch.rev/CH_TOT.rev)*100).toFixed(0)+"%":""}</div>`).join("")}</div>${CHANNELS.map(ch=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:2px;background:${ch.c}"></div><span style="font-size:10px">${ch.n}</span></div><span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600">${fmt(ch.rev)}</span></div>`).join("")}</div>
+    </div>
+    <div class="card"><div class="card-title">Desglose de Ingresos (c/ impuestos)</div>
+      <div class="stacked-bar tall">${[{l:"Habitación 79.8%",v:REV.hab,c:"var(--g)",tc:"#000"},{l:"Impuestos 14.6%",v:REV.imp,c:"#5B9BD5",tc:"#fff"},{l:"Extras 5.6%",v:REV.ext,c:"#10B981",tc:"#fff"}].map(x=>`<div class="stacked-seg" style="width:${(x.v/(REV.hab+REV.ext+REV.imp))*100}%;background:${x.c};color:${x.tc};font-size:9px;font-weight:700">${x.l}</div>`).join("")}</div>
+      <div class="grid g3" style="gap:8px">${[{l:"Habitación",v:REV.hab,c:"var(--g)",d:"Tarifa de hospedaje"},{l:"Impuestos",v:REV.imp,c:"#5B9BD5",d:"ISH + IVA"},{l:"Extras",v:REV.ext,c:"#10B981",d:"Restaurante y servicios"}].map(x=>`<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center"><div style="font-size:8px;color:var(--sb);text-transform:uppercase;letter-spacing:1px">${x.l}</div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${x.c};font-weight:600">${fmt(x.v)}</div><div style="font-size:9px;color:var(--sb)">${x.d}</div></div>`).join("")}</div>
+    </div>`;
+}
+
+function renderHotel(){
+  document.getElementById("viewHotel").innerHTML=`
+    <div class="grid g3" style="gap:10px">
+      <div class="card" style="text-align:center"><div style="display:flex;justify-content:center;margin-bottom:6px;position:relative"><div class="ring-wrap">${ring(H.occ,85)}<div class="ring-text" style="font-size:22px;color:var(--g)">${H.occ}%</div></div></div><div style="font-size:12px;font-weight:500">Ocupación</div><div style="font-size:9px;color:var(--sb)">${H.oN} de ${H.tN} noches</div></div>
+      <div class="card" style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--g);margin-bottom:4px">${fmt(H.adr)}</div><div style="font-size:12px;font-weight:500">ADR</div><div style="font-size:9px;color:var(--sb)">Tarifa diaria promedio</div></div>
+      <div class="card" style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;color:var(--g);margin-bottom:4px">${fmt(H.revpar)}</div><div style="font-size:12px;font-weight:500">RevPAR</div><div style="font-size:9px;color:var(--sb)">Revenue per available room</div></div>
+    </div>
+    <div class="grid g-auto" style="gap:8px">${kpi("Ingreso/Reserva",fmt(H.avgRev),"promedio por booking","💵")}${kpi("Estancia Prom.",H.stay+" noches","duración media","🛏️")}${kpi("Lead Time",H.lead+" días","anticipación","📅")}${kpi("Cancelaciones",fmt(H.cancelled),"31 reservas canceladas","❌",true)}</div>
+    <div class="grid g2" style="gap:10px">
+      <div class="card"><div class="card-title">Distribución de Noches</div>${[{l:"Ocupadas",v:H.oN,c:"var(--g)"},{l:"Vacías",v:H.uN,c:"var(--red)"},{l:"Cerradas",v:H.cN,c:"#555"}].map(x=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:11px">${x.l}</span><span style="color:${x.c};font-weight:500;font-size:11px">${x.v} (${((x.v/H.tN)*100).toFixed(1)}%)</span></div>${bar((x.v/H.tN)*100,x.c)}</div>`).join("")}</div>
+      <div class="card"><div class="card-title">Revenue Intelligence</div>${[{l:"Oportunidad Perdida (noches vacías)",v:H.uN*H.adr,d:H.uN+" noches × ADR",c:"var(--red)"},{l:"Cancelaciones perdidas",v:H.cancelled,d:"31 reservas canceladas",c:"var(--red)"},{l:"Meta 85% → ingreso adicional",v:(H.tN*0.85-H.oN)*H.adr,d:"+"+(Math.round(H.tN*0.85-H.oN))+" noches necesarias",c:"var(--grn)"}].map(x=>`<div style="background:var(--bg);border-radius:7px;padding:10px;margin-bottom:6px"><div style="font-size:8px;color:var(--sb);text-transform:uppercase;letter-spacing:1px">${x.l}</div><div style="font-family:'Cormorant Garamond',serif;font-size:17px;color:${x.c};font-weight:600">${fmt(x.v)}</div><div style="font-size:9px;color:var(--sb)">${x.d}</div></div>`).join("")}</div>
+    </div>`;
+}
+
+function renderChannels(){
+  document.getElementById("viewChannels").innerHTML=`
+    <div class="grid g-auto" style="gap:8px">${kpi("Ingreso Total",fmt(CH_TOT.rev),"113 reservas","💰")}${kpi("Cancelaciones","31",((31/113)*100).toFixed(0)+"% tasa","❌",true)}${kpi("Mejor ADR",fmt(5912),"Direct Booking","🏆",false,true)}${kpi("Mayor Volumen",fmt(968274),"Expedia · 53 res","📊")}</div>
+    <div class="grid g-auto-ch" style="gap:10px">${CHANNELS.map(ch=>{const pct=((ch.rev/CH_TOT.rev)*100);return`<div class="ch-card" style="border:1px solid ${ch.c}33"><div class="top-line" style="background:${ch.c}"></div><div class="ch-card-head"><div><div class="ch-card-name" style="color:${ch.c}">${ch.n}</div><div class="ch-card-rev">${fmt(ch.rev)}</div><div class="ch-card-pct">${pct.toFixed(1)}% del total</div></div><div class="ch-card-badge"><div class="ch-card-badge-num">${ch.res}</div><div class="ch-card-badge-label">reservas</div></div></div><div class="ch-card-stats">${[{l:"ADR",v:fmt(ch.adr)},{l:"Noches",v:ch.nights},{l:"Lead",v:ch.lead+"d"},{l:"Canc.",v:ch.canc>0?ch.canc+" ("+((ch.canc/(ch.res+ch.canc))*100).toFixed(0)+"%)":"0"}].map(m=>`<div><div class="ch-card-stat-label">${m.l}</div><div class="ch-card-stat-val" style="${m.l==="Canc."&&ch.canc>3?"color:var(--red)":""}">${m.v}</div></div>`).join("")}</div>${bar(pct,ch.c)}</div>`}).join("")}</div>
+    <div class="alert alert-warn"><div class="alert-title">⚠️ Alerta: Booking.com</div><div class="alert-text">ADR de solo $292 con 8 cancelaciones de 19 reservas (42% tasa de cancelación). Este canal genera alto volumen de gestión pero bajo ingreso. Considerar revisar tarifas o restricciones.</div></div>`;
+}
+
+function renderCalendar(f){
+  const m=months[curMonth],occMap=getOccMap(f);
+  const dim=new Date(m.y,m.m+1,0).getDate(),fd=new Date(m.y,m.m,1).getDay();
+  const mStr=String(m.m+1).padStart(2,"0");
+  const mDaily=DP.filter(d=>d.d.split("-")[1]===mStr);
+  const maxD=Math.max(...mDaily.map(d=>d.t),1);
+
+  let calDays="";
+  for(let i=0;i<fd;i++)calDays+="<div></div>";
+  for(let day=1;day<=dim;day++){
+    const k=`${m.y}-${m.m}-${day}`,occ=occMap[k]||[];
+    const isSel=selDate&&selDate.y===m.y&&selDate.m===m.m&&selDate.d===day;
+    const dots=occ.slice(0,4).map(r=>`<div class="cal-dot" style="background:${RC[r.rm]||'#666'}"></div>`).join("");
+    calDays+=`<div class="cal-day${occ.length?" has-occ":""}${isSel?" selected":""}" onclick="selectDay(${m.y},${m.m},${day})"><div class="cal-day-num">${day}</div>${occ.length?`<div class="cal-day-dots">${dots}</div>`:""}</div>`;
+  }
+
+  let sidePanel;
+  if(selDate){
+    const dayRes=occMap[`${selDate.y}-${selDate.m}-${selDate.d}`]||[];
+    sidePanel=`<div class="side-panel"><div class="side-title">${selDate.d} de ${months[selDate.m]?.l||""}</div><div class="side-sub">${dayRes.length===0?"Sin ocupación":dayRes.length+"/7 villas"}</div>`;
+    if(!dayRes.length)sidePanel+=`<div class="side-empty"><div class="side-empty-icon">🌙</div><div class="side-empty-text">Disponible</div></div>`;
+    dayRes.forEach((res,i)=>{
+      const ch=getCh(res.r),isOpen=openRes===res.r;
+      sidePanel+=`<div class="res-card${isOpen?" open":""}" onclick="toggleRes('${res.r}')"><div class="res-card-head"><div><div class="res-card-guest">${res.g}</div><div class="res-card-room"><span class="res-card-room-dot" style="background:${RC[res.rm]}"></span><span class="res-card-room-name">${res.rm}</span></div></div><div style="text-align:right"><div class="res-card-total">${fmt(res.t)}</div></div></div><div class="res-card-detail"><div><span class="label">Canal:</span> <span style="color:${ch.c}">${ch.n}</span></div><div><span class="label">$/n:</span> ${fmt(res.t/Math.max(res.n,1))}</div><div style="grid-column:1/-1"><span class="label">Pago:</span> <span style="color:${res.p>1?"var(--red)":"var(--grn)"}">${res.p>1?fmt(res.p)+" pend.":"Pagado ✓"}</span></div></div></div>`;
+    });
+    if(dayRes.length)sidePanel+=`<div class="side-footer"><span class="side-footer-label">Ingreso/día</span><span class="side-footer-val">${fmt(dayRes.reduce((s,r)=>s+r.t/Math.max(r.n,1),0))}</span></div>`;
+    sidePanel+=`</div>`;
+  }else{
+    sidePanel=`<div class="side-panel" style="text-align:center;padding:16px"><div style="font-size:22px">🌙</div><div style="font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--g);margin-top:4px">Selecciona un día</div></div>`;
+  }
+
+  document.getElementById("viewCalendar").innerHTML=`<div class="grid g-cal">
+    <div>
+      <div class="cal-nav"><button class="cal-btn" ${curMonth===0?"disabled":""} onclick="navMonth(-1)">←</button><div class="cal-month">${m.l} 2026</div><button class="cal-btn" ${curMonth===2?"disabled":""} onclick="navMonth(1)">→</button></div>
+      <div class="cal-chart"><div class="cal-chart-label">Cobros — ${m.l}</div><div class="cal-bars">${mDaily.map(d=>{const dayN=parseInt(d.d);const isSel=selDate&&selDate.d===dayN&&selDate.m===m.m;return`<div class="cal-bar" onclick="selectDay(${m.y},${m.m},${dayN})"><div class="cal-bar-card" style="height:${Math.max((d.c/maxD)*100,d.c>0?3:0)}%;background:${isSel?"var(--gl)":"rgba(200,164,94,.47)"}"></div>${d.e>0?`<div class="cal-bar-cash" style="height:${(d.e/maxD)*100}%"></div>`:""}</div>`}).join("")}</div><div class="cal-legend"><span>🟡 Tarjeta</span><span>🟢 Efectivo</span></div></div>
+      <div class="cal-grid-wrap"><div class="cal-weekdays">${["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map(d=>`<div class="cal-wd">${d}</div>`).join("")}</div><div class="cal-days">${calDays}</div><div class="cal-colors">${VILLAS.map(v=>`<div class="cal-color"><div class="cal-color-dot" style="background:${v.c}"></div>${v.n.replace("Villa ","")}</div>`).join("")}</div></div>
+    </div>
+    <div>${sidePanel}</div>
+  </div>`;
+}
+
+function renderPayments(){
+  document.getElementById("viewPayments").innerHTML=`
+    <div class="grid g-auto" style="gap:8px">${kpi("Total Cobrado",fmt(1388148),"173 transacciones","✅")}${kpi("Tarjeta",fmt(1345435),"148 pagos","💳")}${kpi("Efectivo",fmt(42713),"25 pagos","💵")}${kpi("Reembolsos",fmt(4509),"3 devoluciones","↩️")}</div>
+    <div class="grid g2" style="gap:10px">
+      <div class="card"><div class="card-title">Métodos de Pago</div><div class="stacked-bar">${Object.entries(PM).map(([n,d])=>`<div class="stacked-seg" style="width:${(d.v/pmT)*100}%;background:${d.c}">${(d.v/pmT)>0.08?((d.v/pmT)*100).toFixed(0)+"%":""}</div>`).join("")}</div>${Object.entries(PM).sort((a,b)=>b[1].v-a[1].v).map(([n,d])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:2px;background:${d.c}"></div><span style="font-size:10px">${n}</span></div><span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600">${fmt(d.v)}</span></div>`).join("")}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card"><div class="card-title">Pasarela</div>${[{n:"LH Payments (auto)",v:1089825,c:"#5B9BD5"},{n:"Terminal / Manual",v:298323,c:"#E8C66A"}].map(g=>`<div style="margin-bottom:5px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:10px">${g.n}</span><span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--g);font-weight:600">${fmt(g.v)}</span></div>${bar((g.v/1388148)*100,g.c)}</div>`).join("")}</div>
+        <div class="card"><div class="card-title">Tipo de Ingreso</div>${[{n:"🏨 Hospedaje",v:1292131,p:"92.8%"},{n:"🍽️ Restaurante",v:100526,p:"7.2%"}].map((t,i)=>`<div style="display:flex;justify-content:space-between;padding:5px 0;${i===0?"border-bottom:1px solid var(--bd)":""}"><span style="font-size:11px">${t.n}</span><div><span style="font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--g);font-weight:600">${fmt(t.v)}</span><span style="font-size:8px;color:var(--sb);margin-left:3px">${t.p}</span></div></div>`).join("")}</div>
+      </div>
+    </div>`;
+}
+
+function renderRooms(st){
+  const sorted=[...VILLAS].sort((a,b)=>b.revpar-a.revpar);
+  const maxRP=sorted[0].revpar;
+  document.getElementById("viewRooms").innerHTML=`
+    <div class="grid g-auto-lg" style="gap:10px">${VILLAS.map(v=>`<div class="villa-card" style="border-color:${v.c}33"><div class="top-line" style="background:${v.c}"></div><div class="villa-head"><div class="villa-info"><span class="villa-emoji">${v.e}</span><div><div class="villa-name" style="color:${v.c}">${v.n}</div><div class="villa-meta">${v.res} res · ${v.nights} noches</div></div></div><div class="ring-wrap">${ring(v.occ,44,4)}<div class="ring-text" style="font-size:10px;color:${v.occ>=80?"var(--grn)":v.occ>=70?"var(--g)":"var(--red)"}">${v.occ}%</div></div></div><div class="villa-stats"><div><div class="villa-stat-label">Ingreso</div><div class="villa-stat-val">${fmt(v.rev)}</div></div><div><div class="villa-stat-label">ADR</div><div class="villa-stat-val normal">${fmt(v.adr)}</div></div><div><div class="villa-stat-label">RevPAR</div><div class="villa-stat-val normal">${fmt(v.revpar)}</div></div><div><div class="villa-stat-label">Lead Time</div><div class="villa-stat-val normal">${v.lead}d</div></div></div></div>`).join("")}</div>
+    <div class="card"><div class="card-title">Ranking por RevPAR</div>${sorted.map((v,i)=>`<div class="rank-row"><span class="rank-num" style="color:${i<3?"var(--g)":"var(--sb)"}">${i+1}</span><span class="rank-dot" style="background:${v.c}"></span><span class="rank-name">${v.n}</span><span class="rank-val">${fmt(v.revpar)}</span><div class="rank-bar"><div class="rank-bar-fill" style="width:${(v.revpar/maxRP)*100}%;background:${v.c}"></div></div><span class="rank-occ">${v.occ}%</span></div>`).join("")}</div>`;
+}
+
+function renderList(f){
+  const sorted=[...f].sort((a,b)=>pd(a.d)-pd(b.d));
+  document.getElementById("viewList").innerHTML=`<div class="card" style="padding:0"><div class="table-wrap"><table><thead><tr>${["Fecha","Huésped","Villa","Noches","Canal","Total","Pendiente","$/Noche"].map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${sorted.map(res=>{const ch=getCh(res.r);return`<tr><td class="td-sub" style="white-space:nowrap">${res.d}</td><td class="td-guest">${res.g}</td><td><span class="td-room"><span class="td-room-dot" style="background:${RC[res.rm]}"></span><span class="td-room-name">${res.rm.replace("Villa ","")}</span></span></td><td style="text-align:center">${res.n}</td><td><span class="td-channel" style="color:${ch.c}">${ch.n}</span></td><td class="td-total">${fmt(res.t)}</td><td class="${res.p>1?"td-pending":"td-paid"}">${res.p>1?fmt(res.p):"✓"}</td><td class="td-sub">${fmt(res.t/Math.max(res.n,1))}</td></tr>`}).join("")}</tbody></table></div></div>`;
+}
+
+// === INTERACTIONS ===
+function selectDay(y,m,d){selDate={y,m,d};openRes=null;render()}
+function navMonth(dir){curMonth=Math.max(0,Math.min(2,curMonth+dir));selDate=null;render()}
+function toggleRes(r){openRes=openRes===r?null:r;render()}
+
+// === INIT ===
+initTabs();initVillaSelect();render();
+</script>
+</body>
+</html>

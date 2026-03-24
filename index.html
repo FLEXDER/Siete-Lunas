@@ -186,7 +186,7 @@ function rKP(){
     <div class="cd"><div class="tt">KPIs Hoteleros</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><div class="kl">ADR</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--g)">${fmt(ST.adr)}</div></div>
       <div><div class="kl">RevPAR</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--g)">${fmt(ST.revPAR)}</div></div>
-      <div><div class="kl">Estancia Prom.</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--tx)">${ST.avgStay} noches</div></div>
+      <div><div class="kl">Estancia Prom.</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--tx)">${Math.round(ST.avgStay)} noches</div></div>
       <div><div class="kl">Lead Time</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--tx)">${ST.avgLeadTime} días</div></div>
       <div><div class="kl">Rev/Reserva</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--g)">${fmt(ST.avgRevPerBooking)}</div></div>
       <div><div class="kl">Tasa Cancelación</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--red)">${cR}%</div><div style="font-size:9px;color:var(--sb)">${tCanc} de ${tCanc+ST.rend_res}</div></div>
@@ -254,9 +254,9 @@ function rGs(){
   <div class="kr fi">
     <div class="kpi"><div class="kl">Total Huéspedes</div><div class="kv wh">${GST.length}</div></div>
     <div class="kpi"><div class="kl">Con País</div><div class="kv gn">${idG.reduce((s,c)=>s+c.count,0)}</div><div class="kd">${idG.length} países</div></div>
-    <div class="kpi"><div class="kl">Sin País</div><div class="kv rd">${unid?.count||0}</div><div class="kd">${((unid?.count||0)/GST.length*100).toFixed(0)}%</div></div>
+    <div class="kpi"><div class="kl">Sin País</div><div class="kv rd" style="font-family:Outfit,sans-serif">${unid?.count||0}</div><div class="kd">${((unid?.count||0)/GST.length*100).toFixed(0)}%</div></div>
     <div class="kpi"><div class="kl">Estancia Prom.</div><div class="kv wh">${avgN.toFixed(1)}n</div></div>
-    <div class="kpi"><div class="kl">Repetido</div><div class="kv gn">1</div><div class="kd">1 huésped con 2 estancias</div></div>
+    <div class="kpi"><div class="kl">Repetido</div><div class="kv gn" style="font-family:Outfit,sans-serif">1</div><div class="kd">1 huésped con 2 estancias</div></div>
   </div>
   <div class="g2 fi" style="animation-delay:.1s">
     <div class="cd"><div class="tt">Huéspedes por País</div>

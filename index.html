@@ -78,7 +78,7 @@ const CC2={"MasterCard":"#EB001B","Visa":"#1A1F71","American Express":"#006FCF"}
 const FL={"Estados Unidos":"🇺🇸","México":"🇲🇽","Canadá":"🇨🇦","Francia":"🇫🇷","Países Bajos":"🇳🇱","Reino Unido":"🇬🇧","Israel":"🇮🇱","Sin identificar":"🌐","Desconocido":"🌐","Estados Unidos de América":"🇺🇸","Reino Unido de Gran Bretaña e Irlanda del Norte":"🇬🇧"};
 const CTC={"Estados Unidos":"#3B82F6","México":"#10B981","Canadá":"#EF4444","Francia":"#6366F1","Países Bajos":"#F97316","Reino Unido":"#22D3EE","Israel":"#EC4899","Sin identificar":"#6B7280","Desconocido":"#6B7280","Estados Unidos de América":"#3B82F6","Reino Unido de Gran Bretaña e Irlanda del Norte":"#22D3EE"};
 
-const TABS=["Overview","KPIs Hotel","Calendario","Canales","Mercados","Huéspedes","Pagos","Villas","Rendimiento","Reservas"];
+const TABS=["Overview","KPIs Hotel","Ingresos","Calendario","Canales","Mercados","Huéspedes","Pagos","Villas","Rendimiento","Reservas"];
 let tab="Overview",calMo=2,calSel=null,sq="",gsq="";
 
 const fmt=n=>"$"+Math.round(n).toLocaleString("en-US");
@@ -145,7 +145,7 @@ function svgD(data,sz=120,lb=""){
 }
 
 const app=document.getElementById("app");
-function render(){({Overview:rOv,"KPIs Hotel":rKP,Calendario:rCl,Canales:rCn,Mercados:rMk,"Huéspedes":rGs,Pagos:rPg,Villas:rVl,Rendimiento:rRd,Reservas:rRs})[tab]?.()}
+function render(){({Overview:rOv,"KPIs Hotel":rKP,Ingresos:rIng,Calendario:rCl,Canales:rCn,Mercados:rMk,"Huéspedes":rGs,Pagos:rPg,Villas:rVl,Rendimiento:rRd,Reservas:rRs})[tab]?.()}
 
 function rOv(){
   const mk=Object.keys(mCI).sort(),mxR=Math.max(...mk.map(m=>mCI[m].revenue)),MN=["Ene","Feb","Mar"];
@@ -193,12 +193,135 @@ function rKP(){
     </div></div>
   </div>
   <div class="cd fi" style="animation-delay:.1s"><div class="tt">Distribución de Noches</div><div style="display:flex;height:26px;border-radius:6px;overflow:hidden;margin-bottom:8px"><div style="width:${oP}%;background:var(--grn);display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:600">${ST.occupiedNights} ocupadas</div><div style="width:${cP}%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;font-weight:600">${ST.closedNights}</div><div style="width:${uP}%;background:var(--cd3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--sb)">${ST.unoccupiedNights} vacías</div></div></div>
-  <div class="cd fi" style="animation-delay:.15s"><div class="tt">Desglose de Ingresos</div><div style="display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:10px"><div style="width:${(ST.roomRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:600">Hab ${fmt(ST.roomRevenue)}</div><div style="width:${(ST.extrasRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff">Extras</div><div style="width:${(ST.taxRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--cd3);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--sb)">Imp</div></div><div style="display:flex;gap:20px;font-size:11px;color:var(--sb)"><span><span class="dot" style="background:var(--g);margin-right:4px"></span>Habitaciones: <strong style="color:var(--tx)">${fmt(ST.roomRevenue)}</strong> (${(ST.roomRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span><span><span class="dot" style="background:var(--blue);margin-right:4px"></span>Extras: <strong style="color:var(--tx)">${fmt(ST.extrasRevenue)}</strong> (${(ST.extrasRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span><span><span class="dot" style="background:var(--cd3);margin-right:4px;border:1px solid var(--bd)"></span>Impuestos: <strong style="color:var(--tx)">${fmt(ST.taxRevenue)}</strong> (${(ST.taxRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span></div></div>
+  <div class="cd fi" style="animation-delay:.15s"><div class="tt">Desglose de Ingresos</div><div style="display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:10px"><div style="width:${(ST.roomRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:600">Hab ${fmt(ST.roomRevenue)}</div><div style="width:${(ST.extrasRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff">Extras</div><div style="width:${(ST.taxRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100)}%;background:var(--cd3);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--sb)">Comisiones</div></div><div style="display:flex;gap:20px;font-size:11px;color:var(--sb)"><span><span class="dot" style="background:var(--g);margin-right:4px"></span>Habitaciones: <strong style="color:var(--tx)">${fmt(ST.roomRevenue)}</strong> (${(ST.roomRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span><span><span class="dot" style="background:var(--blue);margin-right:4px"></span>Extras: <strong style="color:var(--tx)">${fmt(ST.extrasRevenue)}</strong> (${(ST.extrasRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span><span><span class="dot" style="background:var(--cd3);margin-right:4px;border:1px solid var(--bd)"></span>Comisiones OTA: <strong style="color:var(--tx)">${fmt(ST.taxRevenue)}</strong> (${(ST.taxRevenue/(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)*100).toFixed(1)}%)</span></div></div>
   <div class="g3 fi" style="animation-delay:.2s">
     <div class="ib red"><div class="kl">Oportunidad Perdida</div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--red);font-weight:600">${fmt(lost)}</div><div style="font-size:9px;color:var(--sb);margin-top:2px">${ST.unoccupiedNights} noches vacías × ADR</div></div>
     <div class="ib green"><div class="kl">Meta 85% Ocupación</div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--grn);font-weight:600">+${fmt(addR)}</div><div style="font-size:9px;color:var(--sb);margin-top:2px">+${addN} noches adicionales</div></div>
     <div class="ib blue"><div class="kl">Ingreso Total</div><div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--blue);font-weight:600">${fmt(ST.roomRevenue+ST.extrasRevenue+ST.taxRevenue)}</div></div>
   </div><div class="ft">KPIs oficiales · Little Hotelier</div>`;
+}
+
+function rIng(){
+  const mk=Object.keys(mCI).sort(),MN=['Enero','Febrero','Marzo'],MNS=['Ene','Feb','Mar'];
+  const mxR=Math.max(...mk.map(m=>mCI[m].revenue));
+  // Monthly collected
+  const mPay={};PY.filter(p=>p.tx==='Payment'||p.tx==='Deposit').forEach(p=>{const m=p.d.substring(0,7);if(!mPay[m])mPay[m]=0;mPay[m]+=p.a});
+  const mRef={};PY.filter(p=>p.tx==='Reembolso').forEach(p=>{const m=p.d.substring(0,7);if(!mRef[m])mRef[m]=0;mRef[m]+=p.a});
+  // Grand totals
+  const grandFact=mk.reduce((s,m)=>s+mCI[m].revenue,0);
+  const grandColl=mk.reduce((s,m)=>s+(mPay[m]||0),0);
+  const grandRef=mk.reduce((s,m)=>s+(mRef[m]||0),0);
+  const grandRes=mk.reduce((s,m)=>s+mCI[m].count,0);
+  const grandNights=mk.reduce((s,m)=>s+mCI[m].nights,0);
+
+  // Channel monthly from OCHM
+  const chNames=Object.keys(OCHM).sort((a,b)=>{const ta=Object.values(OCHM[a]).reduce((s,d)=>s+d.revenue,0);const tb=Object.values(OCHM[b]).reduce((s,d)=>s+d.revenue,0);return tb-ta});
+
+  // Villa monthly from ORMM
+  const rmNames=Object.keys(ORMM).sort((a,b)=>{const ta=Object.values(ORMM[a]).reduce((s,d)=>s+d.revenue,0);const tb=Object.values(ORMM[b]).reduce((s,d)=>s+d.revenue,0);return tb-ta});
+
+  app.innerHTML=`
+  <div class="kr fi">
+    ${mk.map((m,i)=>{const d=mCI[m],col=mPay[m]||0;return`<div class="kpi"><div class="kl">${MN[i]} 2026</div><div class="kv">${fmt(d.revenue)}</div><div class="kd">${d.count} reservas · ${d.nights} noches · Cobrado: ${fmt(col)}</div></div>`}).join('')}
+    <div class="kpi"><div class="kl">Total Q1</div><div class="kv">${fmt(grandFact)}</div><div class="kd">${grandRes} reservas · ${grandNights} noches</div></div>
+  </div>
+
+  <div class="cd fi" style="animation-delay:.1s">
+    <div class="tt">Comparativo Mensual</div>
+    <table>
+      <thead><tr><th>Mes</th><th>Facturado</th><th>Cobrado</th><th>Reembolsos</th><th>Reservas</th><th>Noches</th><th>Tarifa Prom/Noche</th><th>Rev/Reserva</th></tr></thead>
+      <tbody>
+        ${mk.map((m,i)=>{const d=mCI[m],col=mPay[m]||0,ref=mRef[m]||0,adr=d.revenue/Math.max(d.nights,1),revRes=d.revenue/Math.max(d.count,1);return`<tr>
+          <td style="color:var(--tx);font-weight:600">${MN[i]}</td>
+          <td style="color:var(--g);font-family:'Cormorant Garamond',serif;font-weight:600;font-size:14px">${fmt(d.revenue)}</td>
+          <td style="color:var(--grn)">${fmt(col)}</td>
+          <td style="color:${ref<0?'var(--red)':'var(--sb)'}">${ref<0?fmt(Math.abs(ref)):'—'}</td>
+          <td>${d.count}</td>
+          <td>${d.nights}</td>
+          <td>${fmt(adr)}</td>
+          <td>${fmt(revRes)}</td>
+        </tr>`}).join('')}
+        <tr style="border-top:2px solid var(--bd);font-weight:600">
+          <td style="color:var(--g)">TOTAL</td>
+          <td style="color:var(--g);font-family:'Cormorant Garamond',serif;font-size:14px">${fmt(grandFact)}</td>
+          <td style="color:var(--grn)">${fmt(grandColl)}</td>
+          <td style="color:var(--red)">${grandRef<0?fmt(Math.abs(grandRef)):'—'}</td>
+          <td>${grandRes}</td>
+          <td>${grandNights}</td>
+          <td>${fmt(grandFact/Math.max(grandNights,1))}</td>
+          <td>${fmt(grandFact/Math.max(grandRes,1))}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="g2 fi" style="animation-delay:.15s">
+    <div class="cd">
+      <div class="tt">Facturado vs Cobrado por Mes</div>
+      <div style="display:flex;align-items:flex-end;gap:16px;height:160px;padding-top:10px">
+        ${mk.map((m,i)=>{const d=mCI[m],col=mPay[m]||0,maxVal=Math.max(mxR,Math.max(...mk.map(m2=>mPay[m2]||0))),hF=(d.revenue/maxVal)*130,hC=(col/maxVal)*130;return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-size:9px;color:var(--g);font-weight:600">${fmt(d.revenue)}</div>
+          <div style="display:flex;gap:3px;align-items:flex-end;width:100%;justify-content:center">
+            <div style="width:40%;height:${hF}px;background:var(--g);border-radius:3px 3px 0 0;opacity:.85"></div>
+            <div style="width:40%;height:${hC}px;background:var(--grn);border-radius:3px 3px 0 0;opacity:.85"></div>
+          </div>
+          <div style="font-size:10px;color:var(--sb)">${MNS[i]}</div>
+        </div>`}).join('')}
+      </div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:10px;font-size:10px;color:var(--sb)">
+        <span><span class="dot" style="background:var(--g);margin-right:4px"></span>Facturado</span>
+        <span><span class="dot" style="background:var(--grn);margin-right:4px"></span>Cobrado</span>
+      </div>
+    </div>
+    <div class="cd">
+      <div class="tt">Tendencia</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:14px">
+        ${mk.map((m,i)=>{const d=mCI[m],col=mPay[m]||0,pctCol=d.revenue?col/d.revenue*100:0,pctTot=d.revenue/grandFact*100;return`<div style="padding:12px;background:var(--cd2);border-radius:8px;border-left:3px solid var(--g)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:13px;color:var(--tx);font-weight:600">${MN[i]}</span>
+            <span style="font-size:9px;color:var(--sb)">${pctTot.toFixed(1)}% del total</span>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--g);font-weight:600">${fmt(d.revenue)}</div>
+          <div style="display:flex;gap:12px;margin-top:4px;font-size:10px;color:var(--sb)">
+            <span>${d.count} reservas</span>
+            <span>${d.nights} noches</span>
+            <span style="color:${pctCol>=90?'var(--grn)':'var(--orange)'}">${pctCol.toFixed(0)}% cobrado</span>
+          </div>
+        </div>`}).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="cd fi" style="animation-delay:.2s">
+    <div class="tt">Ingreso Mensual por Canal (Tarifa de Habitación)</div>
+    <table>
+      <thead><tr><th>Canal</th>${MNS.map(m=>`<th>${m}</th>`).join('')}<th>Total</th><th>%</th></tr></thead>
+      <tbody>
+        ${chNames.map(ch=>{const total=mk.reduce((s,m)=>s+(OCHM[ch]?.[m]?.revenue||0),0);return`<tr>
+          <td><span class="dot" style="background:${CC[ch]||'#666'};margin-right:6px"></span>${ch}</td>
+          ${mk.map(m=>{const d=OCHM[ch]?.[m];return`<td style="font-size:11px">${d?fmt(d.revenue):'—'}</td>`}).join('')}
+          <td style="color:var(--g);font-family:'Cormorant Garamond',serif;font-weight:600">${fmt(total)}</td>
+          <td style="color:var(--sb)">${(total/Object.values(OCH).reduce((s,d)=>s+d.revenue,0)*100).toFixed(1)}%</td>
+        </tr>`}).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cd fi" style="animation-delay:.25s">
+    <div class="tt">Ingreso Mensual por Villa (Tarifa de Habitación)</div>
+    <table>
+      <thead><tr><th>Villa</th>${MNS.map(m=>`<th>${m}</th>`).join('')}<th>Total</th><th>%</th></tr></thead>
+      <tbody>
+        ${rmNames.map(rm=>{const total=mk.reduce((s,m)=>s+(ORMM[rm]?.[m]?.revenue||0),0);const rmClean=rm.replace(/\\s+/g,' ').trim();return`<tr>
+          <td><span class="rdot" style="background:${RC[rmClean]||'#666'}"></span>${rmClean}</td>
+          ${mk.map(m=>{const d=ORMM[rm]?.[m];return`<td style="font-size:11px">${d?fmt(d.revenue):'—'}</td>`}).join('')}
+          <td style="color:var(--g);font-family:'Cormorant Garamond',serif;font-weight:600">${fmt(total)}</td>
+          <td style="color:var(--sb)">${(total/Object.values(ORM).reduce((s,d)=>s+d.revenue,0)*100).toFixed(1)}%</td>
+        </tr>`}).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="ft">Ingresos Mensuales · Ene\u2013Mar 2026 · Little Hotelier</div>`;
 }
 
 function rCl(){
@@ -255,7 +378,7 @@ function rGs(){
     <div class="kpi"><div class="kl">Total Huéspedes</div><div class="kv wh">${GST.length}</div></div>
     <div class="kpi"><div class="kl">Con País</div><div class="kv gn">${idG.reduce((s,c)=>s+c.count,0)}</div><div class="kd">${idG.length} países</div></div>
     <div class="kpi"><div class="kl">Sin País</div><div class="kv rd" style="font-family:Outfit,sans-serif">${unid?.count||0}</div><div class="kd">${((unid?.count||0)/GST.length*100).toFixed(0)}%</div></div>
-    <div class="kpi"><div class="kl">Estancia Prom.</div><div class="kv wh">${avgN.toFixed(1)}n</div></div>
+    <div class="kpi"><div class="kl">Estancia Prom.</div><div class="kv wh">${Math.round(avgN)} noches</div></div>
     <div class="kpi"><div class="kl">Repetido</div><div class="kv gn" style="font-family:Outfit,sans-serif">1</div><div class="kd">1 huésped con 2 estancias</div></div>
   </div>
   <div class="g2 fi" style="animation-delay:.1s">

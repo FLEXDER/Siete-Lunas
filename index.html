@@ -513,6 +513,7 @@ function renderPayments(c){
 
 
 let calMonth=0;
+let calSelDay=null;
 function renderIngresos(c){
   const totalRev=1516363.10;
   const m1=MONTHLY["1"],m2=MONTHLY["2"],m3=MONTHLY["3"];
@@ -556,24 +557,38 @@ function renderCalendario(c){
     const key=year+"-"+String(monthNum).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const occ=CALENDAR[key]||[];
     const n=occ.length;
-    const bg=n>=6?"rgba(200,164,94,0.3)":n>=4?"rgba(200,164,94,0.2)":n>=1?"rgba(200,164,94,0.1)":"var(--card)";
-    const bdr=n>=1?"var(--gold)":"var(--border)";
+    const isSel=calSelDay===key;
+    const bg=isSel?"rgba(200,164,94,0.5)":n>=6?"rgba(200,164,94,0.3)":n>=4?"rgba(200,164,94,0.2)":n>=1?"rgba(200,164,94,0.1)":"var(--card)";
+    const bdr=isSel?"var(--gold2)":n>=1?"var(--gold)":"var(--border)";
+    const bdrW=isSel?"2px":"1px";
+    const shadow=isSel?"0 0 12px rgba(200,164,94,0.4)":"none";
+    const scale=isSel?"transform:scale(1.03);":"";
     const pay=PAY_DAILY[key]||0;
-    cal+='<div style="background:'+bg+';border:1px solid '+bdr+';border-radius:8px;padding:8px;min-height:80px;cursor:pointer;transition:.15s" onclick="showDay(\''+key+'\')">';
-    cal+='<div style="font-size:13px;color:'+(n>0?'var(--gold)':'var(--text3)')+';font-weight:'+(n>0?'500':'300')+'">'+d+'</div>';
-    if(n>0) cal+='<div style="font-size:10px;color:var(--text2);margin-top:4px">'+n+' villa'+(n>1?'s':'')+'</div>';
+    cal+='<div id="cal-'+key+'" style="background:'+bg+';border:'+bdrW+' solid '+bdr+';border-radius:8px;padding:8px;min-height:80px;cursor:pointer;transition:all .2s ease;box-shadow:'+shadow+';'+scale+'" onclick="selectDay(\''+key+'\')" onmouseenter="this.style.transform=\'scale(1.03)\';this.style.boxShadow=\'0 0 8px rgba(200,164,94,0.3)\'" onmouseleave="if(calSelDay!==\''+key+'\'){this.style.transform=\'scale(1)\';this.style.boxShadow=\'none\'}">';
+    cal+='<div style="font-size:13px;color:'+(isSel||n>0?'var(--gold)':'var(--text3)')+';font-weight:'+(isSel||n>0?'600':'300')+'">'+d+'</div>';
+    if(n>0) cal+='<div style="font-size:10px;color:'+(isSel?'var(--text)':'var(--text2)')+';margin-top:4px">'+n+' villa'+(n>1?'s':'')+'</div>';
     if(pay>0) cal+='<div style="font-size:9px;color:var(--green);margin-top:2px">'+fmt(pay)+'</div>';
     cal+='</div>';
   }
   cal+='</div>';
-  c.innerHTML='<div class="section-title">Calendario de Ocupación</div><div class="month-toggle">'+months.map((m,i)=>'<button class="month-btn'+(i===calMonth?' active':'')+'" onclick="calMonth='+i+';renderCalendario(document.getElementById(\'content\'))">'+m+'</button>').join('')+'</div>'+cal+'<div id="dayDetail" style="margin-top:20px"></div><div class="footer">Click en cualquier día para ver detalle · Hotel Boutique Siete Lunas</div>';
+  c.innerHTML='<div class="section-title">Calendario de Ocupación</div><div class="month-toggle">'+months.map((m,i)=>'<button class="month-btn'+(i===calMonth?' active':'')+'" onclick="calMonth='+i+';calSelDay=null;renderCalendario(document.getElementById(\'content\'))">'+m+'</button>').join('')+'</div>'+cal+'<div id="dayDetail" style="margin-top:20px">'+(calSelDay?'':'<div style="color:var(--text3);text-align:center;padding:20px;font-size:13px">Selecciona un día para ver el detalle de ocupación</div>')+'</div><div class="footer">Hotel Boutique Siete Lunas · Calendario Q1 2026</div>';
+  if(calSelDay) showDay(calSelDay);
+}
+function selectDay(key){
+  calSelDay=calSelDay===key?null:key;
+  renderCalendario(document.getElementById('content'));
 }
 function showDay(key){
   const occ=CALENDAR[key]||[];
   const pay=PAY_DAILY[key]||0;
   const el=document.getElementById("dayDetail");
-  if(!occ.length&&!pay){el.innerHTML='<div class="card"><div class="card-title">'+key+'</div><div style="color:var(--text3)">Sin actividad este día</div></div>';return;}
-  el.innerHTML='<div class="card"><div class="card-title">'+key+(pay>0?' · Cobros: '+fmt(pay):'')+'</div>'+(occ.length?'<table class="dt"><thead><tr><th>Huésped</th><th>Villa</th></tr></thead><tbody>'+occ.map(o=>'<tr><td>'+o.g+'</td><td>'+o.rm+'</td></tr>').join('')+'</tbody></table>':'<div style="color:var(--text3)">Sin ocupación</div>')+'</div>';
+  const dateObj=new Date(key+"T12:00:00");
+  const dayNames=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const monthNames=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const niceName=dayNames[dateObj.getDay()]+" "+dateObj.getDate()+" de "+monthNames[dateObj.getMonth()]+" "+dateObj.getFullYear();
+  if(!occ.length&&!pay){el.innerHTML='<div class="card" style="border-color:var(--gold);border-width:1px"><div class="card-title" style="color:var(--gold)">'+niceName+'</div><div style="color:var(--text3);padding:8px 0">Sin actividad este día</div></div>';return;}
+  el.innerHTML='<div class="card" style="border-color:var(--gold);border-width:1px"><div class="card-title" style="color:var(--gold)">'+niceName+(pay>0?' — Cobros: '+fmt(pay):'')+'</div>'+(occ.length?'<div style="margin-bottom:8px;color:var(--text2);font-size:12px">'+occ.length+' villa'+(occ.length>1?'s':'')+' ocupada'+(occ.length>1?'s':'')+'</div><table class="dt"><thead><tr><th>Huésped</th><th>Villa</th></tr></thead><tbody>'+occ.map(o=>'<tr><td>'+o.g+'</td><td>'+o.rm+'</td></tr>').join('')+'</tbody></table>':'<div style="color:var(--text3)">Sin ocupación</div>')+'</div>';
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function renderMercados(c){

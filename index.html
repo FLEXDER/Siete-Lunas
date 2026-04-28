@@ -109,51 +109,99 @@ body {
   margin-bottom: 36px;
 }
 
-.pin-input {
-  width: 100%;
-  padding: 14px 0;
-  border: none;
-  border-bottom: 1px solid var(--bd);
-  background: transparent;
-  color: var(--g);
-  font-family: 'Outfit', sans-serif;
-  font-size: 22px;
-  letter-spacing: 0.4em;
-  text-align: center;
-  outline: none;
-  transition: border-color 0.3s;
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 auto 32px;
+  padding: 8px 0;
 }
-.pin-input:focus { border-bottom-color: var(--g); }
-.pin-input::placeholder { color: #444; letter-spacing: 0.3em; }
-
-.login-btn {
-  margin-top: 24px;
-  width: 100%;
-  padding: 12px 20px;
-  background: var(--g);
-  color: #000;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bd);
   transition: all 0.2s;
 }
-.login-btn:hover { background: var(--gl); }
-
-.login-error {
-  margin-top: 14px;
-  color: var(--red);
-  font-size: 11px;
-  letter-spacing: 1px;
-  min-height: 16px;
-  opacity: 0;
-  transition: opacity 0.3s;
+.pin-dot.filled {
+  background: var(--g);
+  border-color: var(--g);
+  box-shadow: 0 0 12px rgba(200, 164, 94, 0.5);
+  transform: scale(1.15);
 }
-.login-error.show { opacity: 1; }
+.pin-dots.error .pin-dot {
+  border-color: var(--red);
+  background: var(--red);
+  animation: shake 0.4s;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pin-key {
+  aspect-ratio: 1.4 / 1;
+  background: var(--cd2);
+  border: 1px solid var(--bd2);
+  border-radius: 12px;
+  color: var(--tx);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pin-key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(200,164,94,0.0), rgba(200,164,94,0.0));
+  transition: background 0.2s;
+}
+.pin-key:hover {
+  border-color: var(--g);
+  color: var(--g);
+}
+.pin-key:hover::before {
+  background: linear-gradient(135deg, rgba(200,164,94,0.08), rgba(200,164,94,0.0));
+}
+.pin-key:active {
+  transform: scale(0.94);
+  background: var(--g);
+  color: #000;
+  border-color: var(--g);
+}
+.pin-key.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.pin-key.action {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--sb);
+  font-weight: 500;
+}
+.pin-key.action:hover {
+  color: var(--g);
+}
 
 .login-footer {
   margin-top: 32px;
@@ -944,11 +992,27 @@ nav button.act {
     <div class="login-title">SIETE LUNAS</div>
     <div class="login-sub">Dashboard Privado · Q1 2026</div>
 
-    <input type="password" class="pin-input" id="pinInput" placeholder="• • • •" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
 
-    <button class="login-btn" id="loginBtn">Acceder</button>
-
-    <div class="login-error" id="loginError">PIN incorrecto</div>
+    <div class="pin-pad" id="pinPad">
+      <button class="pin-key" data-key="1">1</button>
+      <button class="pin-key" data-key="2">2</button>
+      <button class="pin-key" data-key="3">3</button>
+      <button class="pin-key" data-key="4">4</button>
+      <button class="pin-key" data-key="5">5</button>
+      <button class="pin-key" data-key="6">6</button>
+      <button class="pin-key" data-key="7">7</button>
+      <button class="pin-key" data-key="8">8</button>
+      <button class="pin-key" data-key="9">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" data-key="0">0</button>
+      <button class="pin-key action" data-key="del">←</button>
+    </div>
 
     <div class="login-footer">Flexder Corporativo</div>
   </div>
@@ -1029,43 +1093,88 @@ const USERS = {
   '0826': { name: 'Master',  role: 'Admin' },
 };
 
-// ===== AUTH =====
-const pinInput = document.getElementById('pinInput');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
+// ===== AUTH (PIN PAD) =====
 const loginOverlay = document.getElementById('loginOverlay');
 const app = document.getElementById('app');
 const userNameDisplay = document.getElementById('userNameDisplay');
 const logoutBtn = document.getElementById('logoutBtn');
+const pinDots = document.getElementById('pinDots');
+const pinPad = document.getElementById('pinPad');
+
+let currentPin = '';
+let isProcessing = false;
+
+function updateDots() {
+  const dots = pinDots.querySelectorAll('.pin-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < currentPin.length));
+}
+
+function flashError() {
+  pinDots.classList.add('error');
+  setTimeout(() => {
+    pinDots.classList.remove('error');
+    currentPin = '';
+    updateDots();
+    isProcessing = false;
+  }, 600);
+}
 
 function tryLogin() {
-  const pin = pinInput.value.trim();
-  const user = USERS[pin];
+  const user = USERS[currentPin];
   if (user) {
-    sessionStorage.setItem('sl_user', JSON.stringify({ pin, ...user }));
-    enterApp(user);
+    sessionStorage.setItem('sl_user', JSON.stringify({ pin: currentPin, ...user }));
+    setTimeout(() => enterApp(user), 150); // pequeña pausa para ver dots llenos
   } else {
-    loginError.classList.add('show');
-    pinInput.value = '';
-    setTimeout(() => loginError.classList.remove('show'), 2500);
+    flashError();
   }
 }
-loginBtn.addEventListener('click', tryLogin);
-pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
-pinInput.addEventListener('input', () => loginError.classList.remove('show'));
+
+function pressKey(key) {
+  if (isProcessing) return;
+  if (key === 'del') {
+    currentPin = currentPin.slice(0, -1);
+    updateDots();
+    return;
+  }
+  if (currentPin.length < 4) {
+    currentPin += key;
+    updateDots();
+    if (currentPin.length === 4) {
+      isProcessing = true;
+      setTimeout(tryLogin, 100);
+    }
+  }
+}
+
+// Click en botones del pin pad
+pinPad.addEventListener('click', e => {
+  const btn = e.target.closest('.pin-key[data-key]');
+  if (btn) pressKey(btn.dataset.key);
+});
+
+// Soporte teclado físico
+document.addEventListener('keydown', e => {
+  if (loginOverlay.classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+  else if (e.key === 'Backspace') pressKey('del');
+});
 
 logoutBtn.addEventListener('click', () => {
   sessionStorage.removeItem('sl_user');
   app.classList.remove('visible');
   loginOverlay.classList.remove('hidden');
-  pinInput.value = '';
-  pinInput.focus();
+  currentPin = '';
+  updateDots();
+  isProcessing = false;
 });
 
 function enterApp(user) {
   loginOverlay.classList.add('hidden');
   app.classList.add('visible');
   userNameDisplay.textContent = user.name.toUpperCase();
+  currentPin = '';
+  updateDots();
+  isProcessing = false;
   initApp();
 }
 
@@ -2334,8 +2443,6 @@ renderers.reservas = () => {
 const stored = sessionStorage.getItem('sl_user');
 if (stored) {
   try { enterApp(JSON.parse(stored)); } catch(e) { console.error('Session restore failed:', e); }
-} else {
-  setTimeout(() => pinInput.focus(), 300);
 }
 
 </script>

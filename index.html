@@ -765,6 +765,7 @@ nav button.act {
 .modal-res-villa-V5 { background: var(--blue); }
 .modal-res-villa-V6 { background: var(--grn); }
 .modal-res-villa-V7 { background: var(--purple); }
+.modal-res-villa-UNK { background: var(--bd); color: var(--sb); }
 
 .modal-res-info { min-width: 0; }
 .modal-res-guest {
@@ -1761,8 +1762,11 @@ function abrirModalDia(fecha) {
     reservas.sort((a, b) => (a.villa_key || '').localeCompare(b.villa_key || ''));
 
     resList.innerHTML = reservas.map(r => {
-      const villaTag = (r.villa_key || '').split('_')[0] || '?';
-      const villaShort = r.villa_nombre ? r.villa_nombre.replace('Villa ', '') : '—';
+      const villaKeyFull = r.villa_key || '';
+      const isUnknown = villaKeyFull === 'UNKNOWN' || !villaKeyFull;
+      const villaTag = isUnknown ? 'UNK' : villaKeyFull.split('_')[0];
+      const villaTagText = isUnknown ? '?' : villaTag.replace('V', '');
+      const villaShort = isUnknown ? 'Sin asignar' : (r.villa_nombre ? r.villa_nombre.replace('Villa ', '') : '—');
       const monto = r.hospedaje_neto || r.monto_lh_total || r.monto_tere || 0;
       const tarifaNoche = r.noches ? monto / r.noches : 0;
 
@@ -1773,7 +1777,7 @@ function abrirModalDia(fecha) {
 
       return `
         <div class="modal-res-card">
-          <div class="modal-res-villa-tag modal-res-villa-${villaTag}">${villaTag.replace('V','')}</div>
+          <div class="modal-res-villa-tag modal-res-villa-${villaTag}">${villaTagText}</div>
           <div class="modal-res-info">
             <div class="modal-res-guest">${r.huesped}</div>
             <div class="modal-res-meta">

@@ -1971,42 +1971,61 @@ renderers.rentabilidad = () => {
 
   // ---- chart 2: ingreso vs costo vs margen ----
   const pm = K.por_mes;
-  const maxPesos = Math.max(...pm.map(f => f.ingreso));
-  const yMaxPesos = maxPesos * 1.25;
-  const maxPct = Math.max(...pm.map(f => f.margen));
-  const minPct = Math.min(0, ...pm.map(f => f.margen));
-  const y1Max = maxPct * 1.3;
-  const HOLGURA = 0.10;
-  let y1Min = minPct - Math.abs(maxPct - minPct) * 0.12;
-  pm.forEach(f => {
-    const alturaBarra = f.ingreso / yMaxPesos + HOLGURA;
-    if (alturaBarra >= 1) return;
-    const limite = (f.margen - y1Max * alturaBarra) / (1 - alturaBarra);
-    if (limite < y1Min) y1Min = limite;
-  });
+  const minUtil = Math.min(0, ...pm.map(f => f.utilidad));
+  const yMin = minUtil < 0 ? minUtil * 1.35 : 0;
+
+  const margenLabelPlugin = {
+    id: 'margenLabel',
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(2);
+      if (!meta || meta.hidden) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = '600 11px Outfit, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      meta.data.forEach((pt, i) => {
+        const f = pm[i];
+        ctx.fillStyle = f.margen >= 0 ? C_GREEN : C_RED;
+        if (f.utilidad >= 0) {
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(fmtPct(f.margen), pt.x, pt.y - 11);
+        } else {
+          ctx.textBaseline = 'top';
+          ctx.fillText(fmtPct(f.margen), pt.x, pt.y + 11);
+        }
+      });
+      ctx.restore();
+    }
+  };
+
   safeChart('rentMesChart', {
     data: {
       labels: pm.map(f => cap(f.mes)),
       datasets: [
-        { type: 'bar', label: 'Ingreso', data: pm.map(f => f.ingreso), backgroundColor: C_GOLD_D, borderRadius: 3, order: 3, yAxisID: 'y' },
-        { type: 'bar', label: 'Costo', data: pm.map(f => f.total), backgroundColor: C_BLUE, borderRadius: 3, order: 2, yAxisID: 'y' },
-        { type: 'line', label: 'Margen', data: pm.map(f => f.margen), borderColor: C_GREEN, backgroundColor: C_GREEN,
-          borderWidth: 2, pointRadius: 4, pointBackgroundColor: C_BG, pointBorderWidth: 2, tension: 0.3, order: 1, yAxisID: 'y1' },
+        { type: 'bar', label: 'Ingreso', data: pm.map(f => f.ingreso), backgroundColor: C_GOLD_D, borderRadius: 3, order: 3 },
+        { type: 'bar', label: 'Costo', data: pm.map(f => f.total), backgroundColor: C_BLUE, borderRadius: 3, order: 2 },
+        { type: 'line', label: 'Utilidad operativa', data: pm.map(f => f.utilidad),
+          borderColor: 'rgba(255,255,255,0.55)', backgroundColor: '#FFFFFF',
+          pointBackgroundColor: pm.map(f => (f.utilidad >= 0 ? C_GREEN : C_RED)),
+          pointBorderColor: C_BG, pointBorderWidth: 2,
+          borderWidth: 2, pointRadius: 6, tension: 0, order: 1 },
       ],
     },
     options: {
-      responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 26, bottom: 6 } },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { labels: { color: C_DIM, font: { size: 11 }, boxWidth: 10 } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.dataset.yAxisID === 'y1' ? fmtPct(ctx.parsed.y) : fmtMXN(ctx.parsed.y)) } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtMXN(ctx.parsed.y)
+          + (ctx.datasetIndex === 2 ? '  ·  margen ' + fmtPct(pm[ctx.dataIndex].margen) : '') } },
       },
       scales: {
         x: { grid: { display: false }, ticks: { color: C_DIM, font: { size: 11 } } },
-        y: { min: 0, max: yMaxPesos, grid: { color: C_BORDER }, ticks: { color: C_DIM, font: { size: 10 }, callback: v => fmtMXN(v) } },
-        y1: { position: 'right', min: y1Min, max: y1Max, grid: { display: false },
-              ticks: { color: C_GREEN, font: { size: 10 }, callback: v => v.toFixed(0) + '%' } },
+        y: { min: yMin, grid: { color: C_BORDER }, ticks: { color: C_DIM, font: { size: 10 }, callback: v => fmtMXN(v) } },
       },
     },
+    plugins: [margenLabelPlugin],
   });
 
   // ---- chart 3: nomina fiscal vs efectivo ----
@@ -2275,20 +2294,30 @@ renderers.gastos = () => {
   `;
 
   // ---- Chart mensual ----
-  // Los pesos y el % viven en ejes distintos, asi que hay que calcular el rango
-  // del eje derecho para que cada punto quede siempre despejado por arriba de su barra.
+  // Un solo eje en pesos: los puntos se dibujan sobre la punta de cada barra y el
+  // porcentaje se imprime como etiqueta, no como segunda escala.
   const maxGastoMes = Math.max(...G.por_mes.map(m => m.total));
-  const yMaxPesos = maxGastoMes * 1.35;
-  const maxPct = Math.max(...G.por_mes.map(m => m.pct_ingreso));
-  const y1Max = maxPct * 1.15;
-  const HOLGURA = 0.10;                       // 10% de la altura del area de trazo
-  let y1Min = 0;
-  G.por_mes.forEach(m => {
-    const alturaBarra = m.total / yMaxPesos + HOLGURA;
-    if (alturaBarra >= 1) return;             // sin solucion posible, se ignora
-    const limite = (m.pct_ingreso - y1Max * alturaBarra) / (1 - alturaBarra);
-    if (limite < y1Min) y1Min = limite;
-  });
+  const yMaxPesos = maxGastoMes * 1.18;
+  const pctLabelPlugin = {
+    id: 'pctLabel',
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(1);
+      if (!meta || meta.hidden) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.font = '600 11px Outfit, system-ui, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      meta.data.forEach((pt, i) => {
+        const v = chart.data.datasets[1].data[i];
+        if (v === null || v === undefined) return;
+        ctx.fillText(v.toFixed(1) + '%', pt.x, pt.y - 12);
+      });
+      ctx.restore();
+    }
+  };
+
   safeChart('gastosMesChart', {
     type: 'bar',
     data: {
@@ -2299,32 +2328,33 @@ renderers.gastos = () => {
         backgroundColor: G.por_mes.map(m => m.parcial ? 'rgba(200,164,94,0.35)' : C_GOLD),
         borderColor: G.por_mes.map(m => m.parcial ? C_GOLD : 'transparent'),
         borderWidth: G.por_mes.map(m => m.parcial ? 1 : 0),
-        borderRadius: 4, yAxisID: 'y',
+        borderRadius: 4, yAxisID: 'y', order: 2,
       }, {
         type: 'line', label: '% sobre ingreso del mes',
-        data: G.por_mes.map(m => m.pct_ingreso),
-        borderColor: '#FFFFFF', backgroundColor: '#FFFFFF',
+        data: G.por_mes.map(m => m.total),
+        pctReal: G.por_mes.map(m => m.pct_ingreso),
+        borderColor: 'rgba(255,255,255,0.55)', backgroundColor: '#FFFFFF',
         pointBackgroundColor: '#FFFFFF', pointBorderColor: C_BG, pointBorderWidth: 2,
-        yAxisID: 'y1', tension: 0.3, pointRadius: 7, borderWidth: 3, order: -1,
+        yAxisID: 'y', tension: 0, pointRadius: 6, borderWidth: 2, order: 1,
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 26 } },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'top', labels: { color: C_DIM, font: { size: 10 } } },
         tooltip: { callbacks: { label: ctx => ctx.datasetIndex === 0
           ? 'Gasto: ' + fmtMXN(ctx.parsed.y)
-          : 'Representa ' + ctx.parsed.y.toFixed(2) + '% del ingreso' } }
+          : 'Representa ' + G.por_mes[ctx.dataIndex].pct_ingreso.toFixed(2) + '% del ingreso' } }
       },
       scales: {
         x: { grid: { display: false } },
         y: { position: 'left', grid: { color: C_BORDER },
-             min: 0, max: yMaxPesos, ticks: { callback: v => fmtMXN(v) } },
-        y1: { position: 'right', grid: { display: false },
-              min: y1Min, max: y1Max,
-              ticks: { callback: v => (v < -0.0001 ? '' : v.toFixed(1) + '%') } }
+             min: 0, max: yMaxPesos, ticks: { callback: v => fmtMXN(v) } }
       }
-    }
+    },
+    plugins: [pctLabelPlugin]
   });
 
   // ---- Chart categorias ----

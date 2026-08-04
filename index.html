@@ -2310,7 +2310,7 @@ renderers.gastos = () => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       meta.data.forEach((pt, i) => {
-        const v = chart.data.datasets[1].data[i];
+        const v = chart.data.datasets[1].pctReal[i];
         if (v === null || v === undefined) return;
         ctx.fillText(v.toFixed(1) + '%', pt.x, pt.y - 12);
       });
